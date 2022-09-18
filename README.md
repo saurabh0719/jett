@@ -35,6 +35,7 @@ func Home(w http.ResponseWriter, req *http.Request) {
 	jett.JSONResponse(w, "Hello World", 200)
 }
 
+// Middleware
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		fmt.Printf("Middleware\n")
