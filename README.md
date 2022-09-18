@@ -1,6 +1,6 @@
 <div align="center">
     <img src="assets/jett.png">
-	![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge)
+    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
 </div>
 <hr>
 
@@ -8,7 +8,7 @@ Jett is an extemely lightweight micro-framework for building Go HTTP services. B
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
-The core framework is less than `300 loc` but is designed to be easily extandable with middleware.
+The core framework is less than `300 loc` but is designed to be easily extendable with middleware.
 
 <span id="keyfeatures"></span>
 
