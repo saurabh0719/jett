@@ -1,6 +1,6 @@
 <div align="center">
     <img src="assets/jett.png">
-	![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge)
+    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
 </div>
 <hr>
 
