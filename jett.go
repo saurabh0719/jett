@@ -160,7 +160,6 @@ func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...
 	r.Handle("OPTIONS", path, http.HandlerFunc(handlerFn), middleware...)
 }
 
-
 /* -------------------------- GET PARAMS  ------------------------- */
 
 // Helper function to extract path params from request Context()

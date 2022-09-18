@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="assets/jett.png" width="40%">
+    <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett.png" width="50%">
 	<br>
     <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
 </div>
@@ -9,7 +9,7 @@ Jett is an extemely lightweight micro-framework for building Go HTTP services. B
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
-The core framework is less than `300 loc` but is designed to be easily extendable with middleware.
+The core framework is less than 300 loc but is designed to be easily extendable with middleware.
 
 ```go
 package main
@@ -131,8 +131,6 @@ func main() {
 	r.Use(Logger)
 
 	r.GET("/", Home)
-	
-	r.Run(":8000")
 
 	sr := r.Subrouter("/about")
 	sr.Use(Recover)
