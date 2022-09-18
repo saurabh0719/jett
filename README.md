@@ -4,7 +4,7 @@
 </div>
 <hr>
 
-Jett is a lightweight micro-framework for quickly building Go HTTP services. Built on top of HttpRouter. 
+Jett is a lightweight micro-framework for quickly building Go HTTP services. Built on top of ![HttpRouter](https://github.com/julienschmidt/httprouter). 
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
