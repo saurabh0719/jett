@@ -1,14 +1,25 @@
 <div align="center">
     <img src="assets/jett.png">
-    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
+	![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge)
 </div>
 <hr>
 
-Jett is a lightweight micro-framework for building Go HTTP services. Built on top of [HttpRouter](https://github.com/julienschmidt/httprouter). 
+Jett is an extemely lightweight micro-framework for building Go HTTP services. Built on top of HttpRouter. 
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
-The core framework is less than `300 loc` but is designed to be easily extendable with middleware.
+The core framework is less than `300 loc` but is designed to be easily extandable with middleware.
+
+<span id="keyfeatures"></span>
+
+### Key Features :
+* Build Robust APIs with minimal abstraction! 
+
+* Add middleware at any level - Root, Subrouter or in a specific route!
+* Built-in development server with support for graceful shutdown with timeout and shutdown functions.
+* Highly Flexible & easily customisable with middleware.
+* Helpful Response writers for JSON, XML and Plain Text.
+* Extremely lightweight. Built on top of HttpRouter.
 
 
 ```go
@@ -47,7 +58,7 @@ func Logger(next http.Handler) http.Handler {
 
 <span id="contents"></span>
 
-## Table of Contents :
+### Table of Contents :
 * [Key Features](#keyfeatures)
 * [Using Middleware](#middleware)
 * [Subrouter](#subrouter)
@@ -59,28 +70,15 @@ func Logger(next http.Handler) http.Handler {
 
 <hr>
 
-<span id="keyfeatures"></span>
-
-## Key Features :
-* Build Robust APIs with minimal abstraction! 
-
-* Add middleware at the root level or to a specific route.
-* Built-in development server with support for graceful shutdown with timeout and shutdown functions.
-* Highly Flexible & easily customisable with middleware.
-* Helpful Response writers for JSON, XML and Plain Text.
-* Extremely lightweight. Built on top of HttpRouter.
-
-<hr>
-
 <span id="middleware"></span>
 
-## Using Middleware 
+### Using Middleware 
 
 ```go
 func (r *Router) Use(middleware ...func(http.Handler) http.Handler)
 ```
 
-Middleware can be added at the root... 
+Middleware can be added at the at a Router level (root, subrouter) ... 
 
 ```go
 func main() {
@@ -119,9 +117,9 @@ Compatible with any Middleware of the type `func(http.Handler) http.Handler`
 
 <span id="subrouter"></span>
 
-## Subrouter 
+### Subrouter 
 
-Subrouters cannot have their own Middleware. But you can add specific middleware to each route of a subrouter. 
+The `Subrouter` function returns a new `Router` instance.
 
 Example - 
 
@@ -137,6 +135,7 @@ func main() {
 	r.Run(":8000")
 
 	sr := r.Subrouter("/about")
+	sr.Use(Recover)
 	sr.GET("/", About)
 
 	h.RunServer(":8000", 5)
@@ -147,7 +146,7 @@ func main() {
 
 <span id="devserver"></span>
 
-## Development Server
+### Development Server
 
 ```go
 func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
@@ -163,7 +162,7 @@ Apart from `RunServer` - Jett also has helper functions  `func (r *Router) Run(a
 
 <span id="routes"></span>
 
-## Register routes 
+### Register routes 
 
 ```go 
 // These functions optionally accept their own unique middleware for their handlers
@@ -181,13 +180,19 @@ func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...f
 func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 ```
 
+Optionally, You can directly call the `Handle` function that accepts an `http.Handler`
+
+```go
+func (r *Router) Handle(method, path string, handler http.Handler, middleware ...func(http.Handler) http.Handler)
+```
+
 [Go back to the table of contents](#contents)
 
 <hr>
 
 <span id="params"></span>
 
-## Path & Query parameters 
+### Path & Query parameters 
 
 Path parameters -
 ```go
@@ -230,7 +235,7 @@ func About(w http.ResponseWriter, req *http.Request) {
 
 <span id="writers"></span>
 
-## Response Writers
+### Response Writers
 
 Optional helpers for formatting the output 
 
