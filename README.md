@@ -138,7 +138,7 @@ func main() {
 	sr.Use(Recover)
 	sr.GET("/", About)
 
-	h.RunServer(":8000", 5)
+	r.RunServer(":8000", 5)
 }
 ```
 
@@ -217,13 +217,13 @@ func main() {
 
 	r.GET("/person/:id", Person)
 
-	h.RunServer(":8000", 5)
+	r.RunServer(":8000", 5)
 }
 
-func About(w http.ResponseWriter, req *http.Request) {
+func Person(w http.ResponseWriter, req *http.Request) {
 	params := jett.PathParams(req)
 	
-    // do something 
+        // do something 
 
 	JSONResponse(w, resp, http.StatusOK)
 }
