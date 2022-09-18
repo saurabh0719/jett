@@ -1,7 +1,7 @@
 <div align="center">
     <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett.png" width="50%">
 	<br>
-    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
+    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge">
 </div>
 <hr>
 
@@ -42,6 +42,12 @@ func Logger(next http.Handler) http.Handler {
 		next.ServeHTTP(w, req)
 	})
 }
+```
+
+Install - 
+
+```sh
+$ go get github.com/saurabh0719/jett
 ```
 
 <span id="keyfeatures"></span>
