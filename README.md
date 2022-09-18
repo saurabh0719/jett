@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="assets/jett.png" width="50%">
+    <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett.png" width="50%">
 	<br>
     <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge">
 </div>
