@@ -1,5 +1,6 @@
 <div align="center">
-    <img src="assets/jett.png" height = "50%" width ="75%">
+    <img src="assets/jett.png">
+	![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge)
 </div>
 <hr>
 
