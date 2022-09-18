@@ -8,7 +8,7 @@ Jett is a lightweight micro-framework for building Go HTTP services. Built on to
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
-The core framework is less than `300 loc` but is designed to be easily extandable with middleware.
+The core framework is less than `300 loc` but is designed to be easily extendable with middleware.
 
 
 ```go
