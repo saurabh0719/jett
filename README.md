@@ -1,11 +1,11 @@
 <div align="center">
-    <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett.png" width="50%">
+    <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett_new.png" width="50%">
 	<br>
     <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge">
 </div>
 <hr>
 
-Jett is an extemely lightweight micro-framework for building Go HTTP services. Built on top of [HttpRouter](https://github.com/julienschmidt/httprouter). 
+Jett is a lightweight micro-framework for building Go HTTP services. Built on top of [HttpRouter](https://github.com/julienschmidt/httprouter). 
 
 Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
 
@@ -32,7 +32,7 @@ func main() {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	jett.JSONResponse(w, "Hello World", 200)
+	jett.JSON(w, "Hello World", 200)
 }
 
 // Middleware
@@ -53,10 +53,10 @@ $ go get github.com/saurabh0719/jett
 <span id="keyfeatures"></span>
 
 ### Key Features :
-* Build Robust APIs with minimal abstraction! 
+* Build REST APIs quickly with minimal abstraction! 
 
 * Add middleware at any level - Root, Subrouter or in a specific route!
-* Built-in development server with support for graceful shutdown with timeout and shutdown functions.
+* Built-in development server with support for graceful shutdown and shutdown functions.
 * Highly Flexible & easily customisable with middleware.
 * Helpful Response writers for JSON, XML and Plain Text.
 * Extremely lightweight. Built on top of HttpRouter.
@@ -68,9 +68,9 @@ $ go get github.com/saurabh0719/jett
 ### Table of Contents :
 * [Using Middleware](#middleware)
 * [Subrouter](#subrouter)
-* [Development Server](#devserver)
 * [Register Routes](#routes)
 * [Path & Query parameters](#params)
+* [Development Server](#devserver)
 * [Response Writers](#writers)
 * [Contribute](#contributors)
 
@@ -142,27 +142,11 @@ func main() {
 	sr.Use(Recover)
 	sr.GET("/", About)
 
-	r.RunServer(":8000", 5)
+	r.Run(":8000")
 }
 ```
 
 <hr> 
-
-<span id="devserver"></span>
-
-### Development Server
-
-```go
-func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
-```
-
-`RunServer` creates a server and allows for graceful shutdown. You can specify a `timeout` (seconds) before the server closes the context. You can also pass multiple cleanup functions (`onShutdownFns ...func()`) to run on shutdown.
-
-Apart from `RunServer` - Jett also has helper functions  `func (r *Router) Run(address string)` and `func (r *Router) RunTLS(address, certFile, keyFile string)`.
-
-[Go back to the table of contents](#contents)
-
-<hr>
 
 <span id="routes"></span>
 
@@ -221,17 +205,100 @@ func main() {
 
 	r.GET("/person/:id", Person)
 
-	r.RunServer(":8000", 5)
+	r.Run(":8000")
 }
 
 func Person(w http.ResponseWriter, req *http.Request) {
 	params := jett.PathParams(req)
 	
-        // do something 
+    // do something and prepare resp
 
-	JSONResponse(w, resp, http.StatusOK)
+	jett.JSON(w, resp, http.StatusOK)
 }
 ```
+
+[Go back to the table of contents](#contents)
+
+<hr>
+
+<span id="devserver"></span>
+
+### Development Server
+
+Jett comes with a built-in development server that handles graceful shutdown. You can optionally specify multiple cleanup functions to be called on shutdown. 
+
+#### Run without context - 
+
+```go
+func (r *Router) Run(address string, onShutdownFns ...func())
+```
+
+```go
+func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func())
+```
+
+#### Run with context - 
+
+Useful when you need to pass a top-level context. Shutdown process will begin when the parent context cancels.
+
+```go
+func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func())
+```
+
+```go
+func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func())
+```
+
+Example - 
+
+`server.go` 
+
+```go 
+
+package main
+
+import (
+	"fmt"
+	"github.com/saurabh0719/jett"
+	"net/http"
+	"time"
+)
+
+func main() {
+
+	r := jett.New()
+
+	r.GET("/", Home)
+
+	// automatically trigger shutdown after 10s
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	r.RunWithContext(ctx, ":8000", shutdownOne, shutdownTwo)
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	jett.TEXT(w, "Hello World!", 200)
+}
+
+// Shutdown functions called during graceful shutdown
+func shutdownOne() {
+	time.Sleep(1 * time.Second)
+	fmt.Println("shutdown function 1 complete!")
+}
+
+func shutdownTwo() {
+	time.Sleep(1 * time.Second)
+	fmt.Println("shutdown function 2 complete!")
+}
+
+```
+
+```sh
+$ go run server.go
+```
+
+Please note that this Server is for development only. A production server should ideally specify timeouts inside http.Server. Any contributions to build upon this is welcome.
 
 [Go back to the table of contents](#contents)
 
@@ -245,13 +312,13 @@ Optional helpers for formatting the output
 
 ```go 
 // JSON output
-func JSONResponse(w http.ResponseWriter, data interface{}, status int)
+func JSON(w http.ResponseWriter, data interface{}, status int)
 
 // Plain Text output
-func PlainResponse(w http.ResponseWriter, data string, status int)
+func TEXT(w http.ResponseWriter, data string, status int)
 
 // XML output
-func XMLResponse(w http.ResponseWriter, data interface{}, status int)
+func XML(w http.ResponseWriter, data interface{}, status int)
 ```
 <hr>
 
@@ -264,9 +331,7 @@ Author and maintainer - [Saurabh Pujari](https://github.com/saurabh0719)
 Logo design - [Akhil Anil](https://twitter.com/adakidpv)
 
 Actively looking for Contributors to further improve upon this project. If you have any interesting ideas
-or feature suggestions, don't hesitate to open an issue!
-
-First thing on the To-do list is to add a few essential middleware in a separate `middleware/` directory!
+or feature suggestions, don't hesitate to open an issue! First thing on the To-do list is to add a few essential middleware in a separate `middleware/` package!
 
 [Go back to the table of contents](#contents)
 
