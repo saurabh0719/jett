@@ -75,10 +75,10 @@ func TestSubrouter(t *testing.T) {
 
 func Home(w http.ResponseWriter, req *http.Request) {
 	params := PathParams(req)
-	JSONResponse(w, params, 200)
+	JSON(w, params, 200)
 }
 
 func About(w http.ResponseWriter, req *http.Request) {
 	params := QueryParams(req)
-	JSONResponse(w, params, 200)
+	JSON(w, params, 200)
 }
