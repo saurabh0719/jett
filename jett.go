@@ -21,6 +21,18 @@ import (
 	"time"
 )
 
+// Jett package details
+const (
+	Version = "0.1.1"
+	website = "https://www.github.com/saurabh0719/jett"
+	banner  = `     ____.         __     __    
+    |    |  ____ _/  |_ _/  |_  
+    |    |_/ __ \\   __\\   __\ 
+/\__|    |\  ___/ |  |   |  |   
+\________| \____ >|__|   |__|  
+	`
+)
+
 /*
 
 Jett's Router is built upon @julienschmidt's httprouter
@@ -184,69 +196,26 @@ func QueryParams(req *http.Request) map[string][]string {
 	return req.URL.Query()
 }
 
-/* -------------------------- RESPONSE WRITERS  ------------------------- */
-
-/*
-
-Optional helper functions for standard JSON, XML or plain text responses
-
-- Enforces the need to explicitly declare an http status code
-- Also ensures the correct Content-Type header is set to avoid client rendering issues
-
-*/
-
-// JSON output
-func JSONResponse(w http.ResponseWriter, data interface{}, status int) {
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		log.Print("Internal Server Error - JSONResponse")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(status)
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonData)
-}
-
-// Plain Text output
-func PlainResponse(w http.ResponseWriter, data string, status int) {
-	w.WriteHeader(status)
-	w.Header().Set("Content-Type", "text/plain")
-	_, err := fmt.Fprintf(w, data)
-	if err != nil {
-		log.Print("Internal Server Error - PlainResponse")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-// XML output
-func XMLResponse(w http.ResponseWriter, data interface{}, status int) {
-	xmlData, err := xml.Marshal(data)
-	if err != nil {
-		log.Print("Internal Server Error - XMLResponse")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(status)
-	w.Header().Set("Content-Type", "application/xml")
-	w.Write(xmlData)
-}
-
 /* -------------------------- DEVELOPMENT SERVER & Run Fns------------------------- */
 
 /*
 
-func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
-
-A development server wrapped around ListenAndServe() with features for graceful shutdown.
-
-- timeout -> Number of seconds to wait before shutting down the server
+Jett's development server that handles graceful shutdown.
+- ctx -> coordinates shutdown with a top level context
 - onShutdownFns -> Cleanup functions to run during shutdown
+
+Please note that this Server is for development only.
+A production server should ideally specify timeouts inside http.Server
 
 */
 
-func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func()) {
+func (r *Router) runServer(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
+
+	// Check if server needs to run with TLS protocol
+	isTLS := true
+	if certFile == "" && keyFile == "" {
+		isTLS = false
+	}
 
 	// New http server
 	server := &http.Server{
@@ -260,57 +229,148 @@ func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
 
 	// Run Server
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error: %s\n", err)
+		if isTLS {
+			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Error: %s\n", err)
+			}
+		} else {
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Error: %s\n", err)
+			}
 		}
 	}()
-	log.Print("Running HTTP server. Address - ", address)
 
-	// Signal received - begin shutdown
-	<-stopServer
-	log.Print("Shutting Down HTTP server")
+	fmt.Println(banner)
+	fmt.Println(website)
+
+	if !isTLS && address[:1] == ":" {
+		fmt.Printf("Running Jett Server v%s, address -> http://127.0.0.1%s\n", Version, address)
+	} else {
+		fmt.Printf("Running Jett Server v%s, address -> %s\n", Version, address)
+	}
+
+	// Stop the server on signal notif or when parent ctx cancels
+	select {
+	case <-stopServer:
+	case <-ctx.Done():
+	}
+
+	fmt.Printf("\n")
+	fmt.Println("-> Shutting down the server...")
+	defer fmt.Println("-> Server exited successfully.")
 
 	// context.Background() gives us an empty context
 	// set timeout to avoid keeping zombie conns alive
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	// Defer the running of shutdown functions
 	defer func() {
 		totalFns := len(onShutdownFns)
 		if totalFns > 0 {
-			log.Print("Running shutdown functions...")
+			fmt.Println("-> Running shutdown functions...")
 		}
 
 		// Call each shutdown function one by one
 		for i, j := totalFns-1, 1; i >= 0; i, j = i-1, j+1 {
-			log.Print(j, " of ", totalFns)
+			fmt.Println("-> ", j, " of ", totalFns)
 			onShutdownFns[i]()
 		}
 
+		// Stop receiving signals
+		signal.Stop(stopServer)
 		// Cancel context after timeout
 		cancel()
 	}()
 
 	// Graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		log.Fatalf("-> Server Shutdown Failed:%+v", err)
 	}
-	log.Print("Server Exited Properly")
 
 }
 
-// Basic Wrappers around ListenAndServe and ListenAndServeTLS
+/*
 
-// Basic http
-func (r *Router) Run(address string) {
-	log.Print("Running HTTP server. Address - ", address)
-	log.Fatal(http.ListenAndServe(address, r))
+The following functions wrap around runServer to abstract certain functionality
+that may not suit your usecase.
+
+You can choose to run the server normally or with TLS and with/without a context.Context
+(in which case context.TODO() is set)
+
+*/
+
+func (r *Router) Run(address string, onShutdownFns ...func()) {
+	r.runServer(context.TODO(), address, "", "", onShutdownFns...)
 }
 
-// HTTPS connections only
-func (r *Router) RunTLS(address, certFile, keyFile string) {
-	log.Print("Running HTTPS server. Address - ", address)
-	log.Fatal(http.ListenAndServeTLS(address, certFile, keyFile, r))
+func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func()) {
+	r.runServer(ctx, address, "", "", onShutdownFns...)
+}
+
+func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func()) {
+	r.runServer(context.TODO(), address, certFile, keyFile, onShutdownFns...)
+}
+
+func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
+	r.runServer(ctx, address, certFile, keyFile, onShutdownFns...)
+}
+
+/* -------------------------- RESPONSE WRITERS  ------------------------- */
+
+/*
+
+Optional helper functions for standard JSON, XML or plain text responses
+
+- Enforces the need to explicitly declare an http status code
+- Also ensures the correct Content-Type header is set to avoid client rendering issues
+
+*/
+
+// JSON output
+func JSON(w http.ResponseWriter, data interface{}, status int) {
+	// prepare JSON response
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		log.Print("Internal Server Error - JSONResponse")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set status and Content-Type
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+// Plain Text output
+func TEXT(w http.ResponseWriter, data string, status int) {
+	// Set status and Content-Type
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "text/plain")
+
+	// Write plain text response
+	_, err := fmt.Fprintf(w, data)
+	if err != nil {
+		log.Print("Internal Server Error - PlainResponse")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+// XML output
+func XML(w http.ResponseWriter, data interface{}, status int) {
+	// prepare XML response
+	xmlData, err := xml.Marshal(data)
+	if err != nil {
+		log.Print("Internal Server Error - XMLResponse")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set status and Content-Type
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/xml")
+	w.Write(xmlData)
 }
 
 // Coming soon - helpers for templates/static files & essential middlewares!
