@@ -210,12 +210,15 @@ Optional helper functions for standard JSON, XML or plain text responses
 
 // JSON output
 func JSONResponse(w http.ResponseWriter, data interface{}, status int) {
+	// prepare JSON response
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		log.Print("Internal Server Error - JSONResponse")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Set status and Content-Type
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(jsonData)
@@ -223,8 +226,11 @@ func JSONResponse(w http.ResponseWriter, data interface{}, status int) {
 
 // Plain Text output
 func PlainResponse(w http.ResponseWriter, data string, status int) {
+	// Set status and Content-Type
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "text/plain")
+
+	// Write plain text response
 	_, err := fmt.Fprintf(w, data)
 	if err != nil {
 		log.Print("Internal Server Error - PlainResponse")
@@ -235,12 +241,15 @@ func PlainResponse(w http.ResponseWriter, data string, status int) {
 
 // XML output
 func XMLResponse(w http.ResponseWriter, data interface{}, status int) {
+	// prepare XML response
 	xmlData, err := xml.Marshal(data)
 	if err != nil {
 		log.Print("Internal Server Error - XMLResponse")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Set status and Content-Type
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/xml")
 	w.Write(xmlData)
@@ -248,20 +257,20 @@ func XMLResponse(w http.ResponseWriter, data interface{}, status int) {
 
 /* -------------------------- DEVELOPMENT SERVER & Run Fns------------------------- */
 
-func (r *Router) Run(address string, onShutdownFns ...func()) {
-	r.RunTLSWithContext(context.TODO(), address, "", "", onShutdownFns...)
-}
+/*
 
-func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func()){
-	r.RunTLSWithContext(context.TODO(), address, certFile, keyFile, onShutdownFns...)
-}
+Jett's development server that handles graceful shutdown. 
+- ctx -> coordinates shutdown with a top level context
+- onShutdownFns -> Cleanup functions to run during shutdown
 
-func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func()) {
-	r.RunTLSWithContext(ctx, address, "", "", onShutdownFns...)
-}
+Please note that this Server is for development only.
+A production server should ideally specify timeouts inside http.Server
 
-func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
+*/
 
+func (r *Router) runServer(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
+
+	// Check if server needs to run with TLS protocol
 	isTLS := true
 	if certFile == "" && keyFile == "" {
 		isTLS = false
@@ -337,6 +346,31 @@ func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFi
 		log.Fatalf("-> Server Shutdown Failed:%+v", err)
 	}
 
+}
+
+/* 
+
+The following functions wrap around runServer to abstract certain functionality
+that may not suit your usecase. 
+
+You can choose to run the server normally or with TLS and with/without a context.Context
+(in which case context.TODO() is set)
+
+*/
+func (r *Router) Run(address string, onShutdownFns ...func()) {
+	r.runServert(context.TODO(), address, "", "", onShutdownFns...)
+}
+
+func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func()) {
+	r.runServer(ctx, address, "", "", onShutdownFns...)
+}
+
+func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func()){
+	r.runServer(context.TODO(), address, certFile, keyFile, onShutdownFns...)
+}
+
+func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
+	r.runServer(ctx, address, certFile, keyFile, onShutdownFns...)
 }
 
 // Coming soon - helpers for templates/static files & essential middlewares!
