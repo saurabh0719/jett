@@ -72,7 +72,7 @@ $ go get github.com/saurabh0719/jett
 * [Register Routes](#routes)
 * [Path & Query parameters](#params)
 * [Response Writers](#writers)
-* [Contributors](#contributors)
+* [Contribute](#contributors)
 
 <hr>
 
@@ -256,9 +256,17 @@ func XMLResponse(w http.ResponseWriter, data interface{}, status int)
 <hr>
 
 <span id="contributors"></span>
+
+### Contribute
+
 Author and maintainer - [Saurabh Pujari](https://github.com/saurabh0719)
 
 Logo design - [Akhil Anil](https://twitter.com/adakidpv)
+
+Actively looking for Contributors to further improve upon this project. If you have any interesting ideas
+or feature suggestions, don't hesitate to open an issue!
+
+First thing on the To-do list is to add a few essential middleware in a separate `middleware/` directory!
 
 [Go back to the table of contents](#contents)
 
