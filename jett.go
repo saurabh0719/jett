@@ -21,6 +21,19 @@ import (
 	"time"
 )
 
+// Jett package details
+const (
+
+	Version = "0.1.1"
+	website = "https://www.github.com/saurabh0719/jett"
+	banner = `     ____.         __     __    
+    |    |  ____ _/  |_ _/  |_  
+    |    |_/ __ \\   __\\   __\ 
+/\__|    |\  ___/ |  |   |  |   
+\________| \____ >|__|   |__|  
+	`
+)
+
 /*
 
 Jett's Router is built upon @julienschmidt's httprouter
@@ -235,18 +248,24 @@ func XMLResponse(w http.ResponseWriter, data interface{}, status int) {
 
 /* -------------------------- DEVELOPMENT SERVER & Run Fns------------------------- */
 
-/*
+func (r *Router) Run(address string, onShutdownFns ...func()) {
+	r.RunTLSWithContext(context.TODO(), address, "", "", onShutdownFns...)
+}
 
-func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
+func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func()){
+	r.RunTLSWithContext(context.TODO(), address, certFile, keyFile, onShutdownFns...)
+}
 
-A development server wrapped around ListenAndServe() with features for graceful shutdown.
+func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func()) {
+	r.RunTLSWithContext(ctx, address, "", "", onShutdownFns...)
+}
 
-- timeout -> Number of seconds to wait before shutting down the server
-- onShutdownFns -> Cleanup functions to run during shutdown
+func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
 
-*/
-
-func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func()) {
+	isTLS := true
+	if certFile == "" && keyFile == "" {
+		isTLS = false
+	}
 
 	// New http server
 	server := &http.Server{
@@ -260,57 +279,64 @@ func (r *Router) RunServer(address string, timeout int, onShutdownFns ...func())
 
 	// Run Server
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Error: %s\n", err)
+		if isTLS {
+			if err := server.ListenAndServeTLS(certFile, keyFile); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Error: %s\n", err)
+			}
+		} else {
+			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("Error: %s\n", err)
+			}
 		}
 	}()
-	log.Print("Running HTTP server. Address - ", address)
 
-	// Signal received - begin shutdown
-	<-stopServer
-	log.Print("Shutting Down HTTP server")
+	fmt.Println(banner)
+	fmt.Println(website, "\n")
+	
+	if !isTLS && address[:1] == ":" {
+		fmt.Printf("Running Jett Server v%s, address -> http://127.0.0.1%s\n", Version, address)
+	} else {
+		fmt.Printf("Running Jett Server v%s, address -> %s\n", Version, address)
+	}
+	
+	// Stop the server on signal notif or when parent ctx cancels
+	select {
+	case <-stopServer:
+	case <- ctx.Done():
+	}
+	
+	fmt.Printf("\n")
+	fmt.Println("-> Shutting down the server...")
+	defer fmt.Println("-> Server exited successfully.")
 
 	// context.Background() gives us an empty context
 	// set timeout to avoid keeping zombie conns alive
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	// Defer the running of shutdown functions
 	defer func() {
 		totalFns := len(onShutdownFns)
 		if totalFns > 0 {
-			log.Print("Running shutdown functions...")
+			fmt.Println("-> Running shutdown functions...")
 		}
 
 		// Call each shutdown function one by one
 		for i, j := totalFns-1, 1; i >= 0; i, j = i-1, j+1 {
-			log.Print(j, " of ", totalFns)
+			fmt.Println("-> ", j, " of ", totalFns)
 			onShutdownFns[i]()
 		}
 
+		// Stop receiving signals
+		signal.Stop(stopServer)
 		// Cancel context after timeout
 		cancel()
 	}()
 
 	// Graceful shutdown
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Server Shutdown Failed:%+v", err)
+		log.Fatalf("-> Server Shutdown Failed:%+v", err)
 	}
-	log.Print("Server Exited Properly")
 
-}
-
-// Basic Wrappers around ListenAndServe and ListenAndServeTLS
-
-// Basic http
-func (r *Router) Run(address string) {
-	log.Print("Running HTTP server. Address - ", address)
-	log.Fatal(http.ListenAndServe(address, r))
-}
-
-// HTTPS connections only
-func (r *Router) RunTLS(address, certFile, keyFile string) {
-	log.Print("Running HTTPS server. Address - ", address)
-	log.Fatal(http.ListenAndServeTLS(address, certFile, keyFile, r))
 }
 
 // Coming soon - helpers for templates/static files & essential middlewares!
