@@ -5,12 +5,9 @@
 </div>
 <hr>
 
-Jett is a lightweight micro-framework for building Go HTTP services. Built on top of [HttpRouter](https://github.com/julienschmidt/httprouter). 
+Jett is a lightweight micro-framework for building Go HTTP services. It builds a layer on top of [HttpRouter](https://github.com/julienschmidt/httprouter) to enable subrouting and flexible addition of middleware at any level - root, subrouter, a specific route.
 
-Jett strives to be simple, without unnecessary abstractions, rather letting the router and methods from `net/http` shine. This allows Jett to be extremely flexible right out of the box. 
-
-The core framework is less than 300 loc but is designed to be easily extendable with middleware.
-<br><br><b>Coming soon -</b> Essential Middleware - BasicAuth, Logger, Recoverer, Blacklist IP, Throttle 
+Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential (optional) middleware.
 
 ```go
 package main
@@ -19,13 +16,14 @@ import (
 	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
+	"github.com/saurabh0719/jett/middleware"
 )
 
 func main() {
 
-	r := jett.New()
+	r := New()
 
-	r.Use(Logger)
+	r.Use(middleware.RequestID, middleware.Logger)
 
 	r.GET("/", Home)
 	
@@ -34,14 +32,6 @@ func main() {
 
 func Home(w http.ResponseWriter, req *http.Request) {
 	jett.JSON(w, "Hello World", 200)
-}
-
-// Middleware
-func Logger(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		fmt.Printf("Middleware\n")
-		next.ServeHTTP(w, req)
-	})
 }
 ```
 
@@ -81,6 +71,18 @@ $ go get github.com/saurabh0719/jett
 
 ### Using Middleware 
 
+Jett supports any Middleware of the type `func(http.Handler) http.Handler`. 
+
+Some essential middleware are provided out of the box in `github.com/saurabh0719/jett/middleware` - 
+- `RequestID` : Injects a request ID into the context of each
+request
+
+- `Logger` : Log request paths, methods, status code as well as execution duration 
+- `Recoverer` : Recover and handle `panic` 
+- `NoCache` : Sets a number of HTTP headers to prevent
+a router (or subrouter) from being cached by an upstream proxy and/or client
+- `BasicAuth` : Basic Auth middleware, [RFC 2617, Section 2](https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
+
 ```go
 func (r *Router) Use(middleware ...func(http.Handler) http.Handler)
 ```
@@ -88,11 +90,22 @@ func (r *Router) Use(middleware ...func(http.Handler) http.Handler)
 Middleware can be added at the at a Router level (root, subrouter) ... 
 
 ```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"github.com/saurabh0719/jett"
+	"github.com/saurabh0719/jett/middleware"
+)
+
 func main() {
 
 	r := jett.New()
 
-	r.GET("/", Home, Logger, Recover)
+	r.Use(middleware.RequestID, middleware.Logger)
+
+	r.GET("/", Home)
 	
 	r.Run(":8000")
 }
@@ -110,13 +123,11 @@ func main() {
 
 	r := jett.New()
 
-	r.GET("/", Home, Logger, Recover)
+	r.GET("/", Home, middleware.Logger, middleware.Recover)
 	
 	r.Run(":8000")
 }
 ```
-
-Compatible with any Middleware of the type `func(http.Handler) http.Handler`
 
 [Go back to the table of contents](#contents)
 
@@ -131,19 +142,35 @@ The `Subrouter` function returns a new `Router` instance.
 Example - 
 
 ```go 
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"github.com/saurabh0719/jett"
+	"github.com/saurabh0719/jett/middleware"
+)
 func main() {
 
 	r := jett.New()
 
-	r.Use(Logger)
+	r.Use(middleware.RequestID)
 
 	r.GET("/", Home)
 
 	sr := r.Subrouter("/about")
-	sr.Use(Recover)
-	sr.GET("/", About)
+	sr.Use(middleware.Logger)
+	sr.GET("/", About, middleware.NoCache)
 
 	r.Run(":8000")
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	jett.JSON(w, "Hello World", 200)
+}
+
+func About(w http.ResponseWriter, req *http.Request) {
+	jett.TEXT(w, "About", 200)
 }
 ```
 
@@ -187,7 +214,7 @@ Path parameters -
 ```go
 // Helper function to extract path params from request Context()
 // as a map[string]string for easy access
-func PathParams(req *http.Request) map[string]string
+func URLParams(req *http.Request) map[string]string
 ```
 
 Query parameters - 
@@ -210,7 +237,7 @@ func main() {
 }
 
 func Person(w http.ResponseWriter, req *http.Request) {
-	params := jett.PathParams(req)
+	params := jett.URLParams(req)
 	
     // do something and prepare resp
 
@@ -333,7 +360,7 @@ Author and maintainer - [Saurabh Pujari](https://github.com/saurabh0719)
 Logo design - [Akhil Anil](https://twitter.com/adakidpv)
 
 Actively looking for Contributors to further improve upon this project. If you have any interesting ideas
-or feature suggestions, don't hesitate to open an issue! First thing on the To-do list is to add a few essential middleware in a separate `middleware/` package!
+or feature suggestions, don't hesitate to open an issue! 
 
 [Go back to the table of contents](#contents)
 
