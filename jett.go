@@ -91,15 +91,10 @@ func (r *Router) Subrouter(path string) *Router {
 
 // Retrieves full path of the current handler from root
 func (r *Router) getFullPath(subPath string) string {
-	prefix := r.pathPrefix
-
-	// Removes duplicate/trailing slash
-	if prefix == "/" || prefix[:len(prefix)-1] == "/" {
-		prefix = prefix[:len(prefix)-1]
-	}
-
-	fullPath := prefix + subPath
-	return fullPath
+	fullPath := r.pathPrefix + subPath
+	// Removes duplicate/multiple slash(es)
+	// pure canonical form
+	return httprouter.CleanPath(fullPath)
 }
 
 // Assigns a function as http NotFound handler
