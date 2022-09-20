@@ -19,7 +19,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	"github.com/saurabh0719/jett/middleware"
 )
 
 // Jett package details
