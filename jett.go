@@ -23,7 +23,7 @@ import (
 
 // Jett package details
 const (
-	Version = "0.1.1"
+	Version = "0.2.0"
 	website = "https://www.github.com/saurabh0719/jett"
 	banner  = `     ____.         __     __    
     |    |  ____ _/  |_ _/  |_  
