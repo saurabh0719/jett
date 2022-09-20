@@ -19,6 +19,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"github.com/saurabh0719/jett/middleware"
 )
 
 // Jett package details
@@ -176,7 +177,7 @@ func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...
 
 // Helper function to extract path params from request Context()
 // as a map[string]string for easy access
-func PathParams(req *http.Request) map[string]string {
+func URLParams(req *http.Request) map[string]string {
 
 	var routerParams httprouter.Params
 	routerParams = httprouter.ParamsFromContext(req.Context())
@@ -243,11 +244,7 @@ func (r *Router) runServer(ctx context.Context, address, certFile, keyFile strin
 	fmt.Println(banner)
 	fmt.Println(website)
 
-	if !isTLS && address[:1] == ":" {
-		fmt.Printf("Running Jett Server v%s, address -> http://127.0.0.1%s\n", Version, address)
-	} else {
-		fmt.Printf("Running Jett Server v%s, address -> %s\n", Version, address)
-	}
+	fmt.Printf("Running Jett Server v%s, address -> %s\n\n", Version, address)
 
 	// Stop the server on signal notif or when parent ctx cancels
 	select {
@@ -373,4 +370,4 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(xmlData)
 }
 
-// Coming soon - helpers for templates/static files & essential middlewares!
+// Coming soon - helpers for templates/static files

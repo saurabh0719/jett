@@ -30,11 +30,11 @@ func TestPathParams(t *testing.T) {
 	body, err := ioutil.ReadAll(res.Body)
 
 	// Convert []byte to map
-	var pathParams map[string]string
-	json.Unmarshal(body, &pathParams)
+	var urlParams map[string]string
+	json.Unmarshal(body, &urlParams)
 
-	if pathParams["param"] != "hello" {
-		t.Fatalf("PathParams -> Expected : [param] hello")
+	if urlParams["param"] != "hello" {
+		t.Fatalf("URLParams -> Expected : [param] hello")
 	}
 
 }
@@ -74,7 +74,7 @@ func TestSubrouter(t *testing.T) {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	params := PathParams(req)
+	params := URLParams(req)
 	JSON(w, params, 200)
 }
 
