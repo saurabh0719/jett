@@ -31,7 +31,7 @@ func main() {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	JSON(w, "Hello World", 200)
+	jett.JSON(w, "Hello World", 200)
 }
 ```
 
@@ -155,15 +155,22 @@ func main() {
 	r := jett.New()
 
 	r.Use(middleware.RequestID)
-	r.Use(middleware.Logger)
 
 	r.GET("/", Home)
 
 	sr := r.Subrouter("/about")
-	sr.Use(middleware.NoCache)
-	sr.GET("/", About)
+	sr.Use(middleware.Logger)
+	sr.GET("/", About, middleware.NoCache)
 
 	r.Run(":8000")
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	jett.JSON(w, "Hello World", 200)
+}
+
+func About(w http.ResponseWriter, req *http.Request) {
+	jett.TEXT(w, "About", 200)
 }
 ```
 
@@ -353,7 +360,7 @@ Author and maintainer - [Saurabh Pujari](https://github.com/saurabh0719)
 Logo design - [Akhil Anil](https://twitter.com/adakidpv)
 
 Actively looking for Contributors to further improve upon this project. If you have any interesting ideas
-or feature suggestions, don't hesitate to open an issue! First thing on the To-do list is to add a few essential middleware in a separate `middleware/` package!
+or feature suggestions, don't hesitate to open an issue! 
 
 [Go back to the table of contents](#contents)
 
