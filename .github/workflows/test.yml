@@ -1,0 +1,29 @@
+name: Go Test CI
+
+on:
+  push:
+    branches: 
+    - main
+    - 'jett-**'
+  pull_request:
+    branches: 
+    - main
+  workflow_dispatch:
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.7.x, 1.19.x]
+
+    steps:
+    - uses: actions/setup-go@v3
+    - name: Set up Golang version ${{ matrix.go-version }}
+      with:
+        go-version: ${{ matrix.go-version }}
+    - uses: actions/checkout@v3
+
+    - name: Run tests
+    - run: go test -v ./...
