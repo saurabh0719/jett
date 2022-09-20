@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestPathParams(t *testing.T) {
+func TestURLParams(t *testing.T) {
 	r := New()
 	r.GET("/home/:param", Home)
 
@@ -39,7 +39,7 @@ func TestPathParams(t *testing.T) {
 
 }
 
-func TestgetFullPath(t *testing.T) {
+func TestGetFullPath(t *testing.T) {
 	r := New()
 
 	expected := "/one"

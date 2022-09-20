@@ -21,7 +21,7 @@ import (
 
 func main() {
 
-	r := New()
+	r := jett.New()
 
 	r.Use(middleware.RequestID, middleware.Logger)
 
