@@ -9,6 +9,8 @@ import (
 	"runtime/debug"
 )
 
+// Simple recoverer middleware to recover from panics and print the debug stack.
+// Also sets status 500 to the ResponseWriter so no more writes take place
 func Recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 

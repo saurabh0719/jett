@@ -7,7 +7,19 @@
 
 Jett is a lightweight micro-framework for building Go HTTP services. It builds a layer on top of [HttpRouter](https://github.com/julienschmidt/httprouter) to enable subrouting and flexible addition of middleware at any level - root, subrouter, a specific route.
 
-Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential (optional) middleware.
+Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential middleware.
+
+<span id="keyfeatures"></span>
+
+### Key Features :
+* Build REST APIs quickly with minimal abstraction! 
+
+* Add middleware at any level - Root, Subrouter or in a specific route!
+* Built-in development server with support for graceful shutdown and shutdown functions.
+* Highly flexible & easily customisable with middleware.
+* Helpful response renderers for HTML, JSON, XML and Plain Text.
+* Clean and simple code. Jett's core is less than 300 LOC.
+* Extremely lightweight. Built on top of `net/http` & `HttpRouter`.
 
 ```go
 package main
@@ -40,17 +52,6 @@ Install -
 ```sh
 $ go get github.com/saurabh0719/jett
 ```
-
-<span id="keyfeatures"></span>
-
-### Key Features :
-* Build REST APIs quickly with minimal abstraction! 
-
-* Add middleware at any level - Root, Subrouter or in a specific route!
-* Built-in development server with support for graceful shutdown and shutdown functions.
-* Highly Flexible & easily customisable with middleware.
-* Helpful Response writers for JSON, XML and Plain Text.
-* Extremely lightweight. Built on top of HttpRouter.
 
 <hr>
 
