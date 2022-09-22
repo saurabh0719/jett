@@ -13,7 +13,7 @@ import (
 // can make a request before hitting any routes. It's also convenient
 // to place this above ACL middlewares as well.
 func Heartbeat(endpoint string) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			if (req.Method == http.MethodGet || req.Method == http.MethodHead) {
 				if strings.EqualFold(req.URL.Path, endpoint) {
@@ -24,6 +24,6 @@ func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 				}
 			}
 			next.ServeHTTP(w, req)
-		}}
+		})
 	}
 }
