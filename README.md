@@ -57,12 +57,13 @@ $ go get github.com/saurabh0719/jett
 <span id="contents"></span>
 
 ### Table of Contents :
-* [Using Middleware](#middleware)
+* [Using middleware](#middleware)
 * [Subrouter](#subrouter)
-* [Register Routes](#routes)
+* [Register routes](#routes)
+* [Static files](#static)
 * [Path & Query parameters](#params)
-* [Development Server](#devserver)
-* [Response Writers](#writers)
+* [Development server](#devserver)
+* [Response renderers](#writers)
 * [Contribute](#contributors)
 
 <hr>
@@ -206,6 +207,36 @@ func (r *Router) Handle(method, path string, handler http.Handler, middleware ..
 
 <hr>
 
+<span id="static"></span>
+
+### Serving static files
+
+The `ServeFiles` is a wrapper around `httprouter.ServeFiles` to serve statice assets.
+
+```go 
+func (r *Router) ServeFiles(path string, root http.FileSystem)
+```
+From [HttpRouter](https://github.com/julienschmidt/httprouter) `router.go` 
+
+> ServeFiles serves files from the given file system root.
+> The path must end with "/*filepath", files are then served from the local
+> path /defined/root/dir/*filepath.
+
+> For example if root is "/etc" and *filepath is "passwd", the local file
+> "/etc/passwd" would be served.
+> Internally a http.FileServer is used, therefore http.NotFound is used instead of the Router's NotFound handler.
+
+> To use the operating system's file system implementation,
+> use http.Dir:
+>     router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
+
+
+Eg. `r.ServeFiles("/static/*filepath", http.Dir("static"))` 
+
+[See a full example here](#example)
+
+<hr> 
+
 <span id="params"></span>
 
 ### Path & Query parameters 
@@ -335,19 +366,100 @@ Please note that this Server is for development only. A production server should
 
 <span id="writers"></span>
 
-### Response Writers
+### Response renderers
 
-Optional helpers for formatting the output 
+Optional helpers for formatting the output. Content type is set automatically.
 
 ```go 
-// JSON output
+// JSON output - Content-Type - application/json
 func JSON(w http.ResponseWriter, data interface{}, status int)
 
-// Plain Text output
-func TEXT(w http.ResponseWriter, data string, status int)
+// Plain Text output - Content-Type - text/plain
+func Text(w http.ResponseWriter, data string, status int)
 
-// XML output
+// XML output - Content-Type - application/xml
 func XML(w http.ResponseWriter, data interface{}, status int)
+```
+
+For html templates (status is set internally, default 200 OK else Server error)
+
+```go 
+// Content-Type - text/html
+func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) 
+```
+
+data can be `nil` or any struct that the template needs. You can also send multiple templates in order of parent -> child 
+
+```go 
+jett.HTML(w, nil, "layout.html", "index.html")
+```
+
+<span id="example"></span>
+
+### A simple example - 
+
+Directory Structure - 
+```
+example/
+	- static/
+		- styles.css
+	- index.html
+	- server.go
+```
+
+- `index.html`
+```html
+
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+	<h1>This is a heading</h1>
+</body>
+</html>
+```
+
+- `styles.css` 
+```css
+body {
+    background-color: #FFD500;
+}
+```
+
+- `server.go`
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"github.com/saurabh0719/jett"
+	"github.com/saurabh0719/jett/middleware"
+)
+
+func main() {
+
+	r := jett.New()
+
+	r.Use(middleware.RequestID, middleware.Logger)
+
+	r.ServeFiles("/static/*filepath", http.Dir("static"))
+
+	r.GET("/:name", Home)
+
+	r.Run(":8000")
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	params := jett.URLParams(req)
+	p := Person{
+		name: params["name"]
+	}
+	jett.HTML(w, p, "index.html")
+}
 ```
 <hr>
 

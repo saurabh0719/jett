@@ -13,6 +13,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -306,7 +307,7 @@ func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFi
 	r.runServer(ctx, address, certFile, keyFile, onShutdownFns...)
 }
 
-/* -------------------------- RESPONSE WRITERS  ------------------------- */
+/* -------------------------- RESPONSE RENDERERS ------------------------ */
 
 /*
 
@@ -322,7 +323,7 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 	// prepare JSON response
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		log.Print("Internal Server Error - JSONResponse")
+		log.Print("Internal Server Error - JSON Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -334,7 +335,7 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 }
 
 // Plain Text output
-func TEXT(w http.ResponseWriter, data string, status int) {
+func Text(w http.ResponseWriter, data string, status int) {
 	// Set status and Content-Type
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "text/plain")
@@ -342,7 +343,7 @@ func TEXT(w http.ResponseWriter, data string, status int) {
 	// Write plain text response
 	_, err := fmt.Fprintf(w, data)
 	if err != nil {
-		log.Print("Internal Server Error - PlainResponse")
+		log.Print("Internal Server Error - Plain Text Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -353,7 +354,7 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	// prepare XML response
 	xmlData, err := xml.Marshal(data)
 	if err != nil {
-		log.Print("Internal Server Error - XMLResponse")
+		log.Print("Internal Server Error - XML Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -364,4 +365,32 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(xmlData)
 }
 
-// Coming soon - helpers for templates/static files
+// HTML templates
+func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) {
+
+	// Parse all the html files passed
+	t, err := template.ParseFiles(htmlFiles...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// New buffer to store html
+	htmlBuffer := new(bytes.Buffer)
+
+	// pass data (or nil) for the template
+	if err := t.Execute(htmlBuffer, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+
+	// Write plain text response
+	_, err = fmt.Fprintf(w, htmlBuffer.String())
+	if err != nil {
+		log.Print("Internal Server Error - HTML Template Response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+}
