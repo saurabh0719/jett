@@ -80,10 +80,12 @@ Some essential middleware are provided out of the box in `github.com/saurabh0719
 request
 
 - `Logger` : Log request paths, methods, status code as well as execution duration 
+- `BasicAuth` : Basic Auth middleware, [RFC 2617, Section 2](https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
 - `Recoverer` : Recover and handle `panic` 
 - `NoCache` : Sets a number of HTTP headers to prevent
 a router (or subrouter) from being cached by an upstream proxy and/or client
-- `BasicAuth` : Basic Auth middleware, [RFC 2617, Section 2](https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
+- `HeartBeat` : Set up an endpoint to conveniently `ping` your server. 
+- `Timeout` : Timeout is a middleware that cancels context after a given timeout
 
 ```go
 func (r *Router) Use(middleware ...func(http.Handler) http.Handler)
