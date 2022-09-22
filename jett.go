@@ -8,6 +8,7 @@ All rights reserved.
 package jett
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
