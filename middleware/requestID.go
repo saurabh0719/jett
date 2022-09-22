@@ -55,17 +55,6 @@ func init() {
 // where "random" is a base62 random string that uniquely identifies this go
 // process, and where the last number is an atomically incremented request
 // counter.
-
-func RequestIDWithCustomHeaderStrKey(headerStrKey string) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			requestID := req.Header.Get(headerStrKey)
-			ctx := context.WithValue(req.Context(), "requestID", requestID)
-			next.ServeHTTP(w, req.WithContext(ctx))
-		})
-	}
-}
-
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		requestID := req.Header.Get(defaultRequestIDHeader)
@@ -76,6 +65,19 @@ func RequestID(next http.Handler) http.Handler {
 		ctx := context.WithValue(req.Context(), "requestID", requestID)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
+}
+
+// RequestIDWithCustomHeaderStrKey is a middleware that injects a request ID into the context of each
+// request. Different from RequestID, this middleware uses a custom header key to get the request ID,
+// and does not generate a new request ID if the custom header key is not present.
+func RequestIDWithCustomHeaderStrKey(headerStrKey string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			requestID := req.Header.Get(headerStrKey)
+			ctx := context.WithValue(req.Context(), "requestID", requestID)
+			next.ServeHTTP(w, req.WithContext(ctx))
+		})
+	}
 }
 
 // GetReqID returns a request ID from the given context if one is present.
