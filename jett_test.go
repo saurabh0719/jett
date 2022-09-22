@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/saurabh0719/jett/middleware"
 )
 
 func TestURLParams(t *testing.T) {
@@ -76,8 +74,6 @@ func TestSubrouter(t *testing.T) {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	reqID := req.Context().Value("requestID")
-	println(reqID)
 	params := URLParams(req)
 	JSON(w, params, 200)
 }
@@ -85,29 +81,4 @@ func Home(w http.ResponseWriter, req *http.Request) {
 func About(w http.ResponseWriter, req *http.Request) {
 	params := QueryParams(req)
 	JSON(w, params, 200)
-}
-
-func TestRequestIDMiddleware(t *testing.T) {
-	r := New()
-
-	r.Use(middleware.RequestIDWithCustomHeaderStrKey("X-Request-ID"))
-
-	r.GET("/", Home)
-
-	ts := httptest.NewServer(r)
-	defer ts.Close()
-
-	req, err := http.NewRequest("GET", ts.URL, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if res.StatusCode != 200 {
-		t.Fatalf("RequestIDMiddleware -> Expected : 200, Output : %d", res.StatusCode)
-	}
 }
