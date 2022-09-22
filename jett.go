@@ -247,7 +247,7 @@ func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...f
 }
 
 // Assigns a HandlerFunc to the GET, HEAD, OPTIONS, POST, PUT, PATCH & DELETE method for the given path.
-// It DOES NOT actually match any random arbitrary method method.
+// It DOES NOT actually match any random arbitrary method.
 func (r *Router) Any(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
 	for _, method := range httpMethods {
 		r.Handle(method, path, http.HandlerFunc(handlerFn), middleware...)
