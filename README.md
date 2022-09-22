@@ -9,6 +9,7 @@ Jett is a lightweight micro-framework for building Go HTTP services. It builds a
 
 Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential middleware.
 
+Read the latest [release notes for v0.3.0!](https://github.com/saurabh0719/jett/releases)
 <span id="keyfeatures"></span>
 
 ### Key Features :
