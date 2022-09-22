@@ -117,6 +117,12 @@ OR on each individual route
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 ```
 
+To access a router's middleware stack - 
+```go
+// Middleware returns a slice of the middleware stack for the router
+func (r *Router) Middleware() []func(http.Handler) http.Handler
+```
+
 Example - 
 
 ```go

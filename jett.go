@@ -131,6 +131,11 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	handler.ServeHTTP(w, req)
 }
 
+// Middleware returns a slice of the middleware stack for the router
+func (r *Router) Middleware() []func(http.Handler) http.Handler {
+	return r.middleware
+}
+
 /* -------------------------- REGISTER HTTP METHOD HANDLERS ------------------------- */
 
 // Register a the given handler
