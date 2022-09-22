@@ -15,11 +15,13 @@ import (
 func Heartbeat(endpoint string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			if (req.Method == "GET" || req.Method == "HEAD") && strings.EqualFold(req.URL.Path, endpoint) {
-				w.Header().Set("Content-Type", "text/plain")
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("."))
-				return
+			if (req.Method == http.MethodGet || req.Method == http.MethodHead) {
+				if strings.EqualFold(req.URL.Path, endpoint) {
+					w.Header().Set("Content-Type", "text/plain")
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("."))
+					return
+				}
 			}
 			next.ServeHTTP(w, req)
 		}}
