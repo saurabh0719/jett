@@ -114,7 +114,23 @@ func (r *Router) NotFound(handlerFn http.HandlerFunc) {
 	r.router.NotFound = http.HandlerFunc(handlerFn)
 }
 
-// Serve Static files from a directory
+/*
+
+Serve Static files from a directory
+From github.com/julienschmidt/httprouter -> router.go :
+
+ServeFiles serves files from the given file system root.
+The path must end with "/*filepath", files are then served from the local
+path /defined/root/dir/*filepath.
+For example if root is "/etc" and *filepath is "passwd", the local file
+"/etc/passwd" would be served.
+Internally a http.FileServer is used, therefore http.NotFound is used instead
+of the Router's NotFound handler.
+To use the operating system's file system implementation,
+use http.Dir:
+    router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
+
+*/
 func (r *Router) ServeFiles(path string, root http.FileSystem) {
 	r.router.ServeFiles(path, root)
 }
@@ -349,6 +365,7 @@ Optional helper functions for standard JSON, XML or plain text responses
 func JSON(w http.ResponseWriter, data interface{}, status int) {
 	// prepare JSON response
 	jsonData, err := json.Marshal(data)
+
 	if err != nil {
 		log.Print("Internal Server Error - JSON Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -369,6 +386,7 @@ func Text(w http.ResponseWriter, data string, status int) {
 
 	// Write plain text response
 	_, err := fmt.Fprintf(w, data)
+
 	if err != nil {
 		log.Print("Internal Server Error - Plain Text Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -380,6 +398,7 @@ func Text(w http.ResponseWriter, data string, status int) {
 func XML(w http.ResponseWriter, data interface{}, status int) {
 	// prepare XML response
 	xmlData, err := xml.Marshal(data)
+
 	if err != nil {
 		log.Print("Internal Server Error - XML Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
