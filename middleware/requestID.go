@@ -1,4 +1,4 @@
-package middleware 
+package middleware
 
 // Adapted from Goji's request_id middleware
 // Source: https://github.com/zenazn/goji/blob/master/web/middleware/request_id.go
@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 )
 
-var RequestIDHeader = "X-Request-ID"
+var defaultRequestIDHeader = "X-Request-ID"
 var prefix string
 var reqid uint64
 
@@ -56,9 +56,19 @@ func init() {
 // process, and where the last number is an atomically incremented request
 // counter.
 
+func RequestIDWithCustomHeaderStrKey(headerStrKey string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			requestID := req.Header.Get(headerStrKey)
+			ctx := context.WithValue(req.Context(), "requestID", requestID)
+			next.ServeHTTP(w, req.WithContext(ctx))
+		})
+	}
+}
+
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		requestID := req.Header.Get(RequestIDHeader)
+		requestID := req.Header.Get(defaultRequestIDHeader)
 		if requestID == "" {
 			myid := atomic.AddUint64(&reqid, 1)
 			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
