@@ -1,6 +1,6 @@
-// Jett is a lightweight micro-framework for building Go HTTP services. 
+// Jett is a lightweight micro-framework for building Go HTTP services.
 //
-// Jett builds a layer on top of HttpRouter to enable subrouting 
+// Jett builds a layer on top of HttpRouter to enable subrouting
 // and flexible addition of middleware at any level - root, subrouter or a specific route!
 //
 // Built for Go 1.7 & above.
@@ -22,7 +22,7 @@
 // 		r.Use(middleware.RequestID, middleware.Logger)
 //
 // 		r.GET("/", Home)
-//		
+//
 // 		r.Run(":8000")
 // 	}
 //
@@ -31,14 +31,14 @@
 // 	}
 //
 //
-// Jett strives to be simple and easy to use with minimal abstractions. 
-// The core framework is less than 300 loc but is designed to be extendable with middleware. 
-// Comes packaged with a development server equipped for graceful shutdown 
+// Jett strives to be simple and easy to use with minimal abstractions.
+// The core framework is less than 300 loc but is designed to be extendable with middleware.
+// Comes packaged with a development server equipped for graceful shutdown
 // and a few essential middleware.
 //
 // Read https://github.com/saurabh0719/jett#readme for further details.
 //
-// LICENSE 
+// LICENSE
 //
 // BSD 3-Clause License.
 // Copyright (c) 2022, Saurabh Pujari.
@@ -64,7 +64,7 @@ import (
 
 // Jett package version
 const (
-	Version = "0.2.0"
+	Version = "0.3.0"
 	website = "https://www.github.com/saurabh0719/jett"
 	banner  = `     ____.         __     __    
     |    |  ____ _/  |_ _/  |_  
@@ -93,7 +93,7 @@ type Router struct {
 	// middleware stack -> List of middleware associated with the router
 	middleware []func(http.Handler) http.Handler
 
-	// pathPrefix -> Contains total path of that router, 
+	// pathPrefix -> Contains total path of that router,
 	// which is then prefixed with every subrouter.
 	// default - '/' (root)
 	pathPrefix string
@@ -126,7 +126,7 @@ func (r *Router) Use(middleware ...func(http.Handler) http.Handler) {
 	r.middleware = append(r.middleware, middleware...)
 }
 
-// Create a new subrouter. 
+// Create a new subrouter.
 // The subrouter automatically gets assigned the middleware from the parent router
 func (r *Router) Subrouter(path string) *Router {
 
@@ -139,7 +139,7 @@ func (r *Router) Subrouter(path string) *Router {
 	return sr
 }
 
-// Assigns a HandlerFunc as http NotFound handler 
+// Assigns a HandlerFunc as http NotFound handler
 func (r *Router) NotFound(handlerFn http.HandlerFunc) {
 	r.router.NotFound = http.HandlerFunc(handlerFn)
 }
@@ -366,7 +366,6 @@ func (r *Router) runServer(ctx context.Context, address, certFile, keyFile strin
 
 }
 
-
 //
 // The following functions wrap around runServer to abstract certain functionality
 // that may not suit your usecase.
@@ -374,7 +373,6 @@ func (r *Router) runServer(ctx context.Context, address, certFile, keyFile strin
 // You can choose to run the server normally (ListenAndServe) with or with TLS and with/without a context.Context
 // (in which case context.TODO() is set)
 //
-
 
 // development server that handles graceful shutdown.
 // onShutdownFns -> Cleanup functions to run during shutdown
@@ -402,11 +400,11 @@ func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFi
 
 /* -------------------------- RESPONSE RENDERERS ------------------------ */
 
-// 
+//
 // Optional helper functions for standard JSON, XML or plain text responses.
 // Enforces the need to explicitly declare an http status code.
 // Also ensures the correct Content-Type header is set to avoid client rendering issues.
-// 
+//
 
 // JSON renderer.
 // Sets the status code and the Content-Type header to application/json
@@ -426,7 +424,7 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(jsonData)
 }
 
-// Plain Text renderer. 
+// Plain Text renderer.
 // Sets the status code and the Content-Type header to text/plain
 func Text(w http.ResponseWriter, data string, status int) {
 	// Set status and Content-Type
@@ -443,7 +441,7 @@ func Text(w http.ResponseWriter, data string, status int) {
 	}
 }
 
-// XML renderer. 
+// XML renderer.
 // Sets the Content-Type header to application/xml
 func XML(w http.ResponseWriter, data interface{}, status int) {
 	// prepare XML response
@@ -461,7 +459,7 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(xmlData)
 }
 
-// HTML template renderer - 
+// HTML template renderer -
 // Sets the Content-Type header to text/html.
 // Can render nested html files. Files need to ne sent in order of parent -> children
 func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) {
