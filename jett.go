@@ -35,6 +35,16 @@ const (
 	`
 )
 
+var httpMethods = [...]string{
+	http.MethodGet,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodDelete,
+	http.MethodHead,
+	http.MethodOptions,
+	http.MethodPatch,
+}
+
 /*
 
 Jett's Router is built upon @julienschmidt's httprouter
@@ -146,27 +156,38 @@ func (r *Router) Handle(method, path string, handler http.Handler, middleware ..
 // These functions optionally accept their own unique middleware for their handlers
 
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("GET", path, http.HandlerFunc(handlerFn), middleware...)
+	r.Handle(http.MethodGet, path, http.HandlerFunc(handlerFn), middleware...)
 }
 
-func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("PUT", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
-func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("POST", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
-func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("PATCH", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
-func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("DELETE", path, http.HandlerFunc(handlerFn), middleware...)
+func (r *Router) HEAD(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodHead, path, http.HandlerFunc(handlerFn), middleware...)
 }
 
 func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("OPTIONS", path, http.HandlerFunc(handlerFn), middleware...)
+	r.Handle(http.MethodOptions, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPost, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPut, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPatch, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodDelete, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Any() creates routes for the methods mentioned in var httpMethods - it DOES NOT actually match any random arbitrary method method
+func (r *Router) Any(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	for _, method := range httpMethods {
+		r.Handle(method, path, http.HandlerFunc(handlerFn), middleware...)
+	}
 }
 
 /* -------------------------- GET PARAMS  ------------------------- */

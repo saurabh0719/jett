@@ -186,18 +186,23 @@ func About(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
-func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+func (r *Router) HEAD(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+
+func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+
+func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
-func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+// Any() creates routes for the methods mentioned above ^ - it DOES NOT actually match any random arbitrary method method
+func (r *Router) Any(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 ```
 
-Optionally, You can directly call the `Handle` function that accepts an `http.Handler`
+You can also directly call the `Handle` function that accepts an `http.Handler`
 
 ```go
 func (r *Router) Handle(method, path string, handler http.Handler, middleware ...func(http.Handler) http.Handler)
