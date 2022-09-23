@@ -20,7 +20,7 @@ func TestMiddlewareRequestIDWithCustomHeaderStrKey(t *testing.T) {
 	var headerValue = "12345"
 	r := jett.New()
 
-	r.Use(RequestIDWithCustomHeaderStrKey(headerKey))
+	r.Use(RequestIDFromCustomHeader(headerKey))
 
 	r.GET("/", handler)
 

@@ -1,18 +1,59 @@
-/*
-BSD 3-Clause License
-
-Copyright (c) 2022, Saurabh Pujari
-All rights reserved.
-*/
-
+// Jett is a lightweight micro-framework for building Go HTTP services.
+//
+// Jett builds a layer on top of HttpRouter to enable subrouting
+// and flexible addition of middleware at any level - root, subrouter or a specific route!
+//
+// Built for Go 1.7 & above.
+//
+// Example :
+// 	package main
+//
+// 	import (
+// 		"fmt"
+// 		"net/http"
+// 		"github.com/saurabh0719/jett"
+// 		"github.com/saurabh0719/jett/middleware"
+// 	)
+//
+// 	func main() {
+//
+// 		r := jett.New()
+//
+// 		r.Use(middleware.RequestID, middleware.Logger)
+//
+// 		r.GET("/", Home)
+//
+// 		r.Run(":8000")
+// 	}
+//
+// 	func Home(w http.ResponseWriter, req *http.Request) {
+// 		jett.JSON(w, "Hello World", 200)
+// 	}
+//
+//
+// Jett strives to be simple and easy to use with minimal abstractions.
+// The core framework is less than 300 loc but is designed to be extendable with middleware.
+// Comes packaged with a development server equipped for graceful shutdown
+// and a few essential middleware.
+//
+// Read https://github.com/saurabh0719/jett#readme for further details.
+//
+// LICENSE
+//
+// BSD 3-Clause License.
+// Copyright (c) 2022, Saurabh Pujari.
+// All rights reserved.
+//
 package jett
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -21,9 +62,9 @@ import (
 	"time"
 )
 
-// Jett package details
+// Jett package version
 const (
-	Version = "0.2.0"
+	Version = "0.3.0"
 	website = "https://www.github.com/saurabh0719/jett"
 	banner  = `     ____.         __     __    
     |    |  ____ _/  |_ _/  |_  
@@ -33,27 +74,32 @@ const (
 	`
 )
 
-/*
+var httpMethods = [...]string{
+	http.MethodGet,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodDelete,
+	http.MethodHead,
+	http.MethodOptions,
+	http.MethodPatch,
+}
 
-Jett's Router is built upon @julienschmidt's httprouter
-
-- middleware []func(http.Handler) http.Handler -> List of middleware associated with the (sub)router
-- pathPrefix -> Contains total path of that router, which is then prefixed with every subrouter.
-
-*/
-
+// Jett's Router is built on top of julienschmidt's httprouter.
+// https://github.com/julienschmidt/httprouter
 type Router struct {
 	// httprouter struct
 	router *httprouter.Router
 
-	// middleware stack
+	// middleware stack -> List of middleware associated with the router
 	middleware []func(http.Handler) http.Handler
 
+	// pathPrefix -> Contains total path of that router,
+	// which is then prefixed with every subrouter.
 	// default - '/' (root)
 	pathPrefix string
 }
 
-// Create a new instance of the Router
+// Create a new instance of the Jett's Router
 func New() *Router {
 
 	// new instance of httprouter
@@ -72,12 +118,16 @@ func New() *Router {
 
 /* -------------------------- Router Methods  ------------------------- */
 
-// Add a middlware to the Router's middlware stack
+// Add a middlware to the Router's middlware stack.
+// To use built-in essential middleware,
+//	 import "github.com/saurabh0719/jett/middleware"
+// Read https://github.com/saurabh0719/jett#middleware for further details.
 func (r *Router) Use(middleware ...func(http.Handler) http.Handler) {
 	r.middleware = append(r.middleware, middleware...)
 }
 
-// Create a new subrouter
+// Create a new subrouter.
+// The subrouter automatically gets assigned the middleware from the parent router
 func (r *Router) Subrouter(path string) *Router {
 
 	sr := &Router{
@@ -89,22 +139,9 @@ func (r *Router) Subrouter(path string) *Router {
 	return sr
 }
 
-// Retrieves full path of the current handler from root
-func (r *Router) getFullPath(subPath string) string {
-	fullPath := r.pathPrefix + subPath
-	// Removes duplicate/multiple slash(es)
-	// pure canonical form
-	return httprouter.CleanPath(fullPath)
-}
-
-// Assigns a function as http NotFound handler
+// Assigns a HandlerFunc as http NotFound handler
 func (r *Router) NotFound(handlerFn http.HandlerFunc) {
 	r.router.NotFound = http.HandlerFunc(handlerFn)
-}
-
-// Serve Static files from a directory
-func (r *Router) ServeFiles(path string, root http.FileSystem) {
-	r.router.ServeFiles(path, root)
 }
 
 // creates an http.Handler for the router + middleware stack
@@ -119,9 +156,42 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	handler.ServeHTTP(w, req)
 }
 
+// Middleware returns a slice ([]func(http.Handler) http.Handler) of the middleware stack for the router
+func (r *Router) Middleware() []func(http.Handler) http.Handler {
+	return r.middleware
+}
+
+// Serve Static files from a directory.
+// From github.com/julienschmidt/httprouter -> router.go :
+//
+//  ServeFiles serves files from the given file system root.
+//  The path must end with "/*filepath", files are then served from the local
+//  path /defined/root/dir/*filepath.
+//
+//  For example if root is "/etc" and *filepath is "passwd", the local file
+//  "/etc/passwd" would be served.
+//
+//  Internally a http.FileServer is used, therefore http.NotFound is used instead
+//  of the Router's NotFound handler.
+//
+// 	To use the operating system's file system implementation,
+//  	use http.Dir:
+//     		router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
+func (r *Router) ServeFiles(path string, root http.FileSystem) {
+	r.router.ServeFiles(path, root)
+}
+
+// Retrieves full path of the current handler from root
+func (r *Router) getFullPath(subPath string) string {
+	fullPath := r.pathPrefix + subPath
+	// Removes duplicate/multiple slash(es)
+	// pure canonical form
+	return httprouter.CleanPath(fullPath)
+}
+
 /* -------------------------- REGISTER HTTP METHOD HANDLERS ------------------------- */
 
-// Register a the given handler
+// Register the path and method to the given handler. Also applies the middleware to the Handler
 func (r *Router) Handle(method, path string, handler http.Handler, middleware ...func(http.Handler) http.Handler) {
 
 	// full path from root
@@ -141,36 +211,53 @@ func (r *Router) Handle(method, path string, handler http.Handler, middleware ..
 	r.router.Handler(method, fullPath, handler)
 }
 
-// These functions optionally accept their own unique middleware for their handlers
-
+// Assigns a HandlerFunc to the GET method for the given path. Route-specific middleware can be added as well.
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("GET", path, http.HandlerFunc(handlerFn), middleware...)
+	r.Handle(http.MethodGet, path, http.HandlerFunc(handlerFn), middleware...)
 }
 
-func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("PUT", path, http.HandlerFunc(handlerFn), middleware...)
+// Assigns a HandlerFunc to the HEAD method for the given path. Route-specific middleware can be added as well.
+func (r *Router) HEAD(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodHead, path, http.HandlerFunc(handlerFn), middleware...)
 }
 
-func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("POST", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
-func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("PATCH", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
-func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("DELETE", path, http.HandlerFunc(handlerFn), middleware...)
-}
-
+// Assigns a HandlerFunc to the OPTIONS method for the given path. Route-specific middleware can be added as well.
 func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
-	r.Handle("OPTIONS", path, http.HandlerFunc(handlerFn), middleware...)
+	r.Handle(http.MethodOptions, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Assigns a HandlerFunc to the POST method for the given path. Route-specific middleware can be added as well.
+func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPost, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Assigns a HandlerFunc to the PUT method for the given path. Route-specific middleware can be added as well.
+func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPut, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Assigns a HandlerFunc to the PATCH method for the given path. Route-specific middleware can be added as well.
+func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodPatch, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Assigns a HandlerFunc to the DELETE method for the given path. Route-specific middleware can be added as well.
+func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	r.Handle(http.MethodDelete, path, http.HandlerFunc(handlerFn), middleware...)
+}
+
+// Assigns a HandlerFunc to the GET, HEAD, OPTIONS, POST, PUT, PATCH & DELETE method for the given path.
+// It DOES NOT actually match any random arbitrary method.
+func (r *Router) Any(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler) {
+	for _, method := range httpMethods {
+		r.Handle(method, path, http.HandlerFunc(handlerFn), middleware...)
+	}
 }
 
 /* -------------------------- GET PARAMS  ------------------------- */
 
-// Helper function to extract path params from request Context()
-// as a map[string]string for easy access
+// Helper function to extract URL params from request Context()
+// as a map[string]string for easy access.
 func URLParams(req *http.Request) map[string]string {
 
 	var routerParams httprouter.Params
@@ -185,25 +272,24 @@ func URLParams(req *http.Request) map[string]string {
 }
 
 // Helper function to extract query params as a map[string][]string
-// Eg. /?one=true,false&two=true
-// {"two" : ["true"], "one": ["true, "false"]}
+//
+// Eg - /?one=true,false&two=true
+//
+// Result - {"two" : ["true"], "one": ["true, "false"]}
 func QueryParams(req *http.Request) map[string][]string {
 	return req.URL.Query()
 }
 
 /* -------------------------- DEVELOPMENT SERVER & Run Fns------------------------- */
 
-/*
-
-Jett's development server that handles graceful shutdown.
-- ctx -> coordinates shutdown with a top level context
-- onShutdownFns -> Cleanup functions to run during shutdown
-
-Please note that this Server is for development only.
-A production server should ideally specify timeouts inside http.Server
-
-*/
-
+//
+// Jett's development server that handles graceful shutdown.
+// - ctx -> coordinates shutdown with a top level context
+// - onShutdownFns -> Cleanup functions to run during shutdown
+//
+// Please note that this Server is for development only.
+// A production server should ideally specify timeouts inside http.Server
+//
 func (r *Router) runServer(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
 
 	// Check if server needs to run with TLS protocol
@@ -280,49 +366,54 @@ func (r *Router) runServer(ctx context.Context, address, certFile, keyFile strin
 
 }
 
-/*
+//
+// The following functions wrap around runServer to abstract certain functionality
+// that may not suit your usecase.
+//
+// You can choose to run the server normally (ListenAndServe) with or with TLS and with/without a context.Context
+// (in which case context.TODO() is set)
+//
 
-The following functions wrap around runServer to abstract certain functionality
-that may not suit your usecase.
-
-You can choose to run the server normally or with TLS and with/without a context.Context
-(in which case context.TODO() is set)
-
-*/
-
+// development server that handles graceful shutdown.
+// onShutdownFns -> Cleanup functions to run during shutdown
 func (r *Router) Run(address string, onShutdownFns ...func()) {
 	r.runServer(context.TODO(), address, "", "", onShutdownFns...)
 }
 
+// development server that handles graceful shutdown.
+// ctx -> coordinates shutdown with a top level context
 func (r *Router) RunWithContext(ctx context.Context, address string, onShutdownFns ...func()) {
 	r.runServer(ctx, address, "", "", onShutdownFns...)
 }
 
+// development server that runs with TLS and handles graceful shutdown.
+// onShutdownFns -> Cleanup functions to run during shutdown
 func (r *Router) RunTLS(address, certFile, keyFile string, onShutdownFns ...func()) {
 	r.runServer(context.TODO(), address, certFile, keyFile, onShutdownFns...)
 }
 
+// development server that runs with TLS and handles graceful shutdown.
+// ctx -> coordinates shutdown with a top level context
 func (r *Router) RunTLSWithContext(ctx context.Context, address, certFile, keyFile string, onShutdownFns ...func()) {
 	r.runServer(ctx, address, certFile, keyFile, onShutdownFns...)
 }
 
-/* -------------------------- RESPONSE WRITERS  ------------------------- */
+/* -------------------------- RESPONSE RENDERERS ------------------------ */
 
-/*
+//
+// Optional helper functions for standard JSON, XML or plain text responses.
+// Enforces the need to explicitly declare an http status code.
+// Also ensures the correct Content-Type header is set to avoid client rendering issues.
+//
 
-Optional helper functions for standard JSON, XML or plain text responses
-
-- Enforces the need to explicitly declare an http status code
-- Also ensures the correct Content-Type header is set to avoid client rendering issues
-
-*/
-
-// JSON output
+// JSON renderer.
+// Sets the status code and the Content-Type header to application/json
 func JSON(w http.ResponseWriter, data interface{}, status int) {
 	// prepare JSON response
 	jsonData, err := json.Marshal(data)
+
 	if err != nil {
-		log.Print("Internal Server Error - JSONResponse")
+		log.Print("Internal Server Error - JSON Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -333,27 +424,31 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(jsonData)
 }
 
-// Plain Text output
-func TEXT(w http.ResponseWriter, data string, status int) {
+// Plain Text renderer.
+// Sets the status code and the Content-Type header to text/plain
+func Text(w http.ResponseWriter, data string, status int) {
 	// Set status and Content-Type
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "text/plain")
 
 	// Write plain text response
 	_, err := fmt.Fprintf(w, data)
+
 	if err != nil {
-		log.Print("Internal Server Error - PlainResponse")
+		log.Print("Internal Server Error - Plain Text Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }
 
-// XML output
+// XML renderer.
+// Sets the Content-Type header to application/xml
 func XML(w http.ResponseWriter, data interface{}, status int) {
 	// prepare XML response
 	xmlData, err := xml.Marshal(data)
+
 	if err != nil {
-		log.Print("Internal Server Error - XMLResponse")
+		log.Print("Internal Server Error - XML Response")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -364,4 +459,34 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	w.Write(xmlData)
 }
 
-// Coming soon - helpers for templates/static files
+// HTML template renderer -
+// Sets the Content-Type header to text/html.
+// Can render nested html files. Files need to ne sent in order of parent -> children
+func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) {
+
+	// Parse all the html files passed
+	t, err := template.ParseFiles(htmlFiles...)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// New buffer to store html
+	htmlBuffer := new(bytes.Buffer)
+
+	// pass data (or nil) for the template
+	if err := t.Execute(htmlBuffer, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+
+	// Write plain text response
+	_, err = fmt.Fprintf(w, htmlBuffer.String())
+	if err != nil {
+		log.Print("Internal Server Error - HTML Template Response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+}

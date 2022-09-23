@@ -1,3 +1,7 @@
+// The middleware package contains some essential middleware 
+// for use with Jett! https://github.com/saurabh0719/jett
+//
+// Read https://github.com/saurabh0719/jett#middleware for more information
 package middleware
 
 import (
@@ -6,10 +10,11 @@ import (
 	"net/http"
 )
 
-// BasicAuth middleware - Implements middleware handler
+// BasicAuth middleware - Implements middleware handler.
+//
 // RFC 2617, Section 2. (https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
+//
 // Ref - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/WWW-Authenticate
-
 func BasicAuth(realm string, credentials map[string]string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

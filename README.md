@@ -1,13 +1,26 @@
 <div align="center">
     <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett_new.png" width="50%">
 	<br>
-    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge">
+    <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/saurabh0719/jett?color=F3DDDD&style=for-the-badge">
 </div>
 <hr>
 
 Jett is a lightweight micro-framework for building Go HTTP services. It builds a layer on top of [HttpRouter](https://github.com/julienschmidt/httprouter) to enable subrouting and flexible addition of middleware at any level - root, subrouter, a specific route.
 
-Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential (optional) middleware.
+Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential middleware.
+
+Read the latest [release notes for v0.3.0!](https://github.com/saurabh0719/jett/releases)
+<span id="keyfeatures"></span>
+
+### Key Features :
+* Build REST APIs quickly with minimal abstraction! 
+
+* Add middleware at any level - Root, Subrouter or in a specific route!
+* Built-in development server with support for graceful shutdown and shutdown functions.
+* Highly flexible & easily customisable with middleware.
+* Helpful response renderers for HTML, JSON, XML and Plain Text.
+* Clean and simple code. Jett's core is less than 300 LOC.
+* Extremely lightweight. Built on top of `net/http` & `HttpRouter`.
 
 ```go
 package main
@@ -41,28 +54,18 @@ Install -
 $ go get github.com/saurabh0719/jett
 ```
 
-<span id="keyfeatures"></span>
-
-### Key Features :
-* Build REST APIs quickly with minimal abstraction! 
-
-* Add middleware at any level - Root, Subrouter or in a specific route!
-* Built-in development server with support for graceful shutdown and shutdown functions.
-* Highly Flexible & easily customisable with middleware.
-* Helpful Response writers for JSON, XML and Plain Text.
-* Extremely lightweight. Built on top of HttpRouter.
-
 <hr>
 
 <span id="contents"></span>
 
 ### Table of Contents :
-* [Using Middleware](#middleware)
+* [Using middleware](#middleware)
 * [Subrouter](#subrouter)
-* [Register Routes](#routes)
+* [Register routes](#routes)
+* [Static files](#static)
 * [Path & Query parameters](#params)
-* [Development Server](#devserver)
-* [Response Writers](#writers)
+* [Development server](#devserver)
+* [Response renderers](#writers)
 * [Contribute](#contributors)
 
 <hr>
@@ -78,10 +81,12 @@ Some essential middleware are provided out of the box in `github.com/saurabh0719
 request
 
 - `Logger` : Log request paths, methods, status code as well as execution duration 
+- `BasicAuth` : Basic Auth middleware, [RFC 2617, Section 2](https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
 - `Recoverer` : Recover and handle `panic` 
 - `NoCache` : Sets a number of HTTP headers to prevent
 a router (or subrouter) from being cached by an upstream proxy and/or client
-- `BasicAuth` : Basic Auth middleware, [RFC 2617, Section 2](https://www.rfc-editor.org/rfc/rfc2617.html#section-2)
+- `HeartBeat` : Set up an endpoint to conveniently `ping` your server. 
+- `Timeout` : Timeout is a middleware that cancels context after a given timeout
 
 ```go
 func (r *Router) Use(middleware ...func(http.Handler) http.Handler)
@@ -114,6 +119,12 @@ OR on each individual route
 
 ```go
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+```
+
+To access a router's middleware stack - 
+```go
+// Middleware returns a slice of the middleware stack for the router
+func (r *Router) Middleware() []func(http.Handler) http.Handler
 ```
 
 Example - 
@@ -185,18 +196,23 @@ func About(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) GET(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
-func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+func (r *Router) HEAD(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+
+func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) POST(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+
+func (r *Router) PUT(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) PATCH(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
 func (r *Router) DELETE(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 
-func (r *Router) OPTIONS(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
+// Any() creates routes for the methods mentioned above ^ - it DOES NOT actually match any random arbitrary method method
+func (r *Router) Any(path string, handlerFn http.HandlerFunc, middleware ...func(http.Handler) http.Handler)
 ```
 
-Optionally, You can directly call the `Handle` function that accepts an `http.Handler`
+You can also directly call the `Handle` function that accepts an `http.Handler`
 
 ```go
 func (r *Router) Handle(method, path string, handler http.Handler, middleware ...func(http.Handler) http.Handler)
@@ -205,6 +221,36 @@ func (r *Router) Handle(method, path string, handler http.Handler, middleware ..
 [Go back to the table of contents](#contents)
 
 <hr>
+
+<span id="static"></span>
+
+### Serving static files
+
+The `ServeFiles` is a wrapper around `httprouter.ServeFiles` to serve statice assets.
+
+```go 
+func (r *Router) ServeFiles(path string, root http.FileSystem)
+```
+From [HttpRouter](https://github.com/julienschmidt/httprouter) `router.go` 
+
+> ServeFiles serves files from the given file system root.
+> The path must end with "/*filepath", files are then served from the local
+> path /defined/root/dir/*filepath.
+
+> For example if root is "/etc" and *filepath is "passwd", the local file
+> "/etc/passwd" would be served.
+> Internally a http.FileServer is used, therefore http.NotFound is used instead of the Router's NotFound handler.
+
+> To use the operating system's file system implementation,
+> use http.Dir:
+>     router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
+
+
+Eg. `r.ServeFiles("/static/*filepath", http.Dir("static"))` 
+
+[See a full example here](#example)
+
+<hr> 
 
 <span id="params"></span>
 
@@ -335,19 +381,100 @@ Please note that this Server is for development only. A production server should
 
 <span id="writers"></span>
 
-### Response Writers
+### Response renderers
 
-Optional helpers for formatting the output 
+Optional helpers for formatting the output. Content type is set automatically.
 
 ```go 
-// JSON output
+// JSON output - Content-Type - application/json
 func JSON(w http.ResponseWriter, data interface{}, status int)
 
-// Plain Text output
-func TEXT(w http.ResponseWriter, data string, status int)
+// Plain Text output - Content-Type - text/plain
+func Text(w http.ResponseWriter, data string, status int)
 
-// XML output
+// XML output - Content-Type - application/xml
 func XML(w http.ResponseWriter, data interface{}, status int)
+```
+
+For html templates (status is set internally, default 200 OK else Server error)
+
+```go 
+// Content-Type - text/html
+func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) 
+```
+
+data can be `nil` or any struct that the template needs. You can also send multiple templates in order of parent -> child 
+
+```go 
+jett.HTML(w, nil, "layout.html", "index.html")
+```
+
+<span id="example"></span>
+
+### A simple example - 
+
+Directory Structure - 
+```
+example/
+	- static/
+		- styles.css
+	- index.html
+	- server.go
+```
+
+- `index.html`
+```html
+
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+	<h1>This is a heading</h1>
+</body>
+</html>
+```
+
+- `styles.css` 
+```css
+body {
+    background-color: #FFD500;
+}
+```
+
+- `server.go`
+```go
+package main
+
+import (
+	"fmt"
+	"net/http"
+	"github.com/saurabh0719/jett"
+	"github.com/saurabh0719/jett/middleware"
+)
+
+func main() {
+
+	r := jett.New()
+
+	r.Use(middleware.RequestID, middleware.Logger)
+
+	r.ServeFiles("/static/*filepath", http.Dir("static"))
+
+	r.GET("/:name", Home)
+
+	r.Run(":8000")
+}
+
+func Home(w http.ResponseWriter, req *http.Request) {
+	params := jett.URLParams(req)
+	p := Person{
+		name: params["name"]
+	}
+	jett.HTML(w, p, "index.html")
+}
 ```
 <hr>
 

@@ -37,6 +37,12 @@ func (rw *responseWriter) WriteHeader(code int) {
 	return
 }
 
+// A basic logger for Jett
+// Logs 
+// 	- RequestID (if available from RequestID middleware)
+// 	- Method and Path 
+// 	- status code of response
+// 	- Duration of the request-response cycle 
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request){
 		
