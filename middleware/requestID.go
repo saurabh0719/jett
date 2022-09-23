@@ -1,4 +1,4 @@
-package middleware 
+package middleware
 
 // Adapted from Goji's request_id middleware
 // Source: https://github.com/zenazn/goji/blob/master/web/middleware/request_id.go
@@ -14,7 +14,7 @@ import (
 	"sync/atomic"
 )
 
-var RequestIDHeader = "X-Request-ID"
+var defaultRequestIDHeader = "X-Request-ID"
 var prefix string
 var reqid uint64
 
@@ -55,10 +55,9 @@ func init() {
 // where "random" is a base62 random string that uniquely identifies this go
 // process, and where the last number is an atomically incremented request
 // counter.
-//
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		requestID := req.Header.Get(RequestIDHeader)
+		requestID := req.Header.Get(defaultRequestIDHeader)
 		if requestID == "" {
 			myid := atomic.AddUint64(&reqid, 1)
 			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
@@ -66,6 +65,23 @@ func RequestID(next http.Handler) http.Handler {
 		ctx := context.WithValue(req.Context(), "requestID", requestID)
 		next.ServeHTTP(w, req.WithContext(ctx))
 	})
+}
+
+// RequestIDFromCustomHeader is a middleware that injects a request ID into the context of each
+// request. Different from RequestID, this middleware uses a custom header key to get the request ID,
+// and will generate a new request ID if the custom header key is not present in the request.
+func RequestIDFromCustomHeader(headerKey string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			requestID := req.Header.Get(headerKey)
+			if requestID == "" {
+				myid := atomic.AddUint64(&reqid, 1)
+				requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+			}
+			ctx := context.WithValue(req.Context(), "requestID", requestID)
+			next.ServeHTTP(w, req.WithContext(ctx))
+		})
+	}
 }
 
 // GetReqID returns a request ID from the given context if one is present.
