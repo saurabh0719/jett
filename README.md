@@ -26,7 +26,6 @@ Read the latest [release notes for v0.3.0!](https://github.com/saurabh0719/jett/
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -98,7 +97,6 @@ Middleware can be added at the at a Router level (root, subrouter) ...
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -156,7 +154,6 @@ Example -
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -181,7 +178,7 @@ func Home(w http.ResponseWriter, req *http.Request) {
 }
 
 func About(w http.ResponseWriter, req *http.Request) {
-	jett.TEXT(w, "About", 200)
+	jett.Text(w, "About", 200)
 }
 ```
 
@@ -449,7 +446,6 @@ body {
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
