@@ -439,6 +439,11 @@ func Text(w http.ResponseWriter, data string, status int) {
 	}
 }
 
+// alias! keep the all uppercase trend, I like it;-)
+func TXT(w http.ResponseWriter, data string, status int) {
+	Text(w, data, status)
+}
+
 // XML renderer.
 // Sets the Content-Type header to application/xml
 func XML(w http.ResponseWriter, data interface{}, status int) {

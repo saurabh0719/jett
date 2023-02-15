@@ -350,7 +350,7 @@ func main() {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	jett.TEXT(w, "Hello World!", 200)
+	jett.TXT(w, "Hello World!", 200)
 }
 
 // Shutdown functions called during graceful shutdown
@@ -387,6 +387,7 @@ Optional helpers for formatting the output. Content type is set automatically.
 func JSON(w http.ResponseWriter, data interface{}, status int)
 
 // Plain Text output - Content-Type - text/plain
+func TXT(w http.ResponseWriter, data string, status int)
 func Text(w http.ResponseWriter, data string, status int)
 
 // XML output - Content-Type - application/xml
