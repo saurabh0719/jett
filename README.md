@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://github.com/saurabh0719/jett/blob/assets/assets/jett_new.png" width="50%">
+    <img src="https://raw.githubusercontent.com/saurabh0719/jett/assets/assets/jett_new.png" width="50%">
 	<br>
     <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/saurabh0719/jett?color=F3DDDD&style=for-the-badge">
 </div>
