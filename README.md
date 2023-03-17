@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://raw.githubusercontent.com/saurabh0719/jett/assets/assets/jett_new.png" width="50%">
+    <img src="https://content-dump-3.s3.ap-south-1.amazonaws.com/saurabh/jett_new.png" width="50%">
 	<br>
     <img alt="GitHub go.mod Go version" src="https://img.shields.io/github/go-mod/go-version/saurabh0719/jett?style=for-the-badge"> <img alt="GitHub release (latest by date including pre-releases)" src="https://img.shields.io/github/v/release/saurabh0719/jett?color=FFD500&style=for-the-badge"> <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/saurabh0719/jett?color=F3DDDD&style=for-the-badge">
 </div>
@@ -9,7 +9,10 @@ Jett is a lightweight micro-framework for building Go HTTP services. It builds a
 
 Jett strives to be simple and easy to use with minimal abstractions. The core framework is less than 300 loc but is designed to be extendable with middleware. Comes packaged with a development server equipped for graceful shutdown and a few essential middleware.
 
-Read the latest [release notes for v0.3.0!](https://github.com/saurabh0719/jett/releases)
+<div align="center">
+    <strong><a href="https://github.com/saurabh0719/jett">Github</a> | <a href="https://saurabh0719.github.io">Website</a> | <a href="https://github.com/saurabh0719/jett/releases">release notes for v0.3.0!</a> </strong>
+</div>
+
 <span id="keyfeatures"></span>
 
 ### Key Features :
