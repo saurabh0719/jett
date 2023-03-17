@@ -427,24 +427,22 @@ example/
 
 - `index.html`
 ```html
-
-<!DOCTYPE html>
-<html>
-<head>
-	<link rel="stylesheet" href="/static/styles.css">
-</head>
-
-<body>
-	<h1>This is a heading</h1>
-</body>
-</html>
+- <html>
+- <head>
+- 	<link rel="stylesheet" href="/static/styles.css">
+- </head>
+- 
+- <body>
+- 	<h1>This is a heading</h1>
+- </body>
+- </html>
 ```
 
 - `styles.css` 
 ```css
-body {
-    background-color: #FFD500;
-}
+- body {
+-     background-color: #FFD500;
+- }
 ```
 
 - `server.go`
