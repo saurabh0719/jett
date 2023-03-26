@@ -9,7 +9,6 @@
 // 	package main
 //
 // 	import (
-// 		"fmt"
 // 		"net/http"
 // 		"github.com/saurabh0719/jett"
 // 		"github.com/saurabh0719/jett/middleware"
@@ -64,14 +63,14 @@ import (
 
 // Jett package version
 const (
-	Version = "0.3.0"
+	Version = "0.3.1"
 	website = "https://www.github.com/saurabh0719/jett"
-	banner  = `     ____.         __     __    
-    |    |  ____ _/  |_ _/  |_  
-    |    |_/ __ \\   __\\   __\ 
-/\__|    |\  ___/ |  |   |  |   
-\________| \____ >|__|   |__|  
-	`
+	banner  = `         ____          __     __    
+    	|    |  ____ _/  |_ _/  |_
+    	|    |_/ __ \\   __\\   __\
+    /\__|    |\  ___/ |  |   |  |
+    \________| \____\ |__|   |__|  
+`
 )
 
 var httpMethods = [...]string{
@@ -363,7 +362,6 @@ func (r *Router) runServer(ctx context.Context, address, certFile, keyFile strin
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("-> Server Shutdown Failed:%+v", err)
 	}
-
 }
 
 //
@@ -419,8 +417,8 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 	}
 
 	// Set status and Content-Type
-	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	w.Write(jsonData)
 }
 
@@ -428,8 +426,8 @@ func JSON(w http.ResponseWriter, data interface{}, status int) {
 // Sets the status code and the Content-Type header to text/plain
 func Text(w http.ResponseWriter, data string, status int) {
 	// Set status and Content-Type
-	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(status)
 
 	// Write plain text response
 	_, err := fmt.Fprintf(w, data)
@@ -439,6 +437,11 @@ func Text(w http.ResponseWriter, data string, status int) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// alias! keep the all uppercase trend, I like it;-)
+func TXT(w http.ResponseWriter, data string, status int) {
+	Text(w, data, status)
 }
 
 // XML renderer.
@@ -454,8 +457,8 @@ func XML(w http.ResponseWriter, data interface{}, status int) {
 	}
 
 	// Set status and Content-Type
-	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/xml")
+	w.WriteHeader(status)
 	w.Write(xmlData)
 }
 
@@ -488,5 +491,4 @@ func HTML(w http.ResponseWriter, data interface{}, htmlFiles ...string) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 }

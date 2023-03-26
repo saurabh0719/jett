@@ -29,7 +29,6 @@ Jett strives to be simple and easy to use with minimal abstractions. The core fr
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -101,7 +100,6 @@ Middleware can be added at the at a Router level (root, subrouter) ...
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -159,7 +157,6 @@ Example -
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"
@@ -184,7 +181,7 @@ func Home(w http.ResponseWriter, req *http.Request) {
 }
 
 func About(w http.ResponseWriter, req *http.Request) {
-	jett.TEXT(w, "About", 200)
+	jett.Text(w, "About", 200)
 }
 ```
 
@@ -356,7 +353,7 @@ func main() {
 }
 
 func Home(w http.ResponseWriter, req *http.Request) {
-	jett.TEXT(w, "Hello World!", 200)
+	jett.TXT(w, "Hello World!", 200)
 }
 
 // Shutdown functions called during graceful shutdown
@@ -393,6 +390,7 @@ Optional helpers for formatting the output. Content type is set automatically.
 func JSON(w http.ResponseWriter, data interface{}, status int)
 
 // Plain Text output - Content-Type - text/plain
+func TXT(w http.ResponseWriter, data string, status int)
 func Text(w http.ResponseWriter, data string, status int)
 
 // XML output - Content-Type - application/xml
@@ -450,7 +448,6 @@ example/
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"github.com/saurabh0719/jett"
 	"github.com/saurabh0719/jett/middleware"

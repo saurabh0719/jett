@@ -73,9 +73,9 @@ func Logger(next http.Handler) http.Handler {
 		// END
 		end := ""
 		if requestID != "" {
-			end = "END RequestID: " + requestID
+			end = "  END RequestID: " + requestID
 		} else {
-			end = "END RequestID: <nil>"
+			end = "  END RequestID: <nil>"
 		}
 
 		// Prepare duration log 
